@@ -65,16 +65,13 @@
   </div>
 
   <div class="card">
-    <h1>Egész számok – Összeadás, Kivonás, Szorzás, Osztás</h1>
-    <div class="meta">20 kérdés. Minden kérdésnél számítsd ki az eredményt. Bármilyen egész szám előfordulhat.</div>
+    <h1>Egész számok összeadása, kivonása, szorzása és osztása</h1>
 
-    <div style="margin-bottom:10px">
-      <label>
-        Név:
-        <input id="playerName" type="text" placeholder="Írd be a neved"
+
+   
+        <input hidden id="playerName" type="text" placeholder="Írd be a neved"
                style="padding:6px;font-size:16px;width:220px" readonly>
-      </label>
-    </div>
+    
 
     <div class="progress" aria-hidden><div class="bar" id="bar"></div></div>
     <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
@@ -104,7 +101,7 @@
 <script>
 const TOTAL = 20;
 const qTotalEl = document.getElementById('qTotal');
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwP-e48WHRCyEEVm9CPeeEg7uAYNZxXvNpS8231ukG3_BHc-xJEGt_qmFJ0yQrSi4TY/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/XXXXX/exec"; // ide a saját script URL-ed
 qTotalEl.textContent = TOTAL;
 
 function randInt(min,max){ return Math.floor(Math.random()*(max-min+1))+min }
@@ -114,26 +111,12 @@ function genOne(){
   const ops = ['+','-','*','/'];
   const op = ops[Math.floor(Math.random()*ops.length)];
   let a,b,res;
-  if(op === '/'){ // osztás
-    b = randInt(1,10);
-    res = randInt(-20,20);
-    a = res*b;
-  } else if(op==='*'){ // szorzás
-    a = randInt(-10,10);
-    b = randInt(-10,10);
-    res = a*b;
-  } else if(op==='+'){ // összeadás
-    a = randInt(-20,20);
-    b = randInt(-20,20);
-    res = a+b;
-  } else { // kivonás
-    a = randInt(-20,20);
-    b = randInt(-20,20);
-    res = a-b;
-  }
-  const distractors = new Set();
-  distractors.add(res); // helyes válasz
-  distractors.add(-res); // helyes válasz ellentettje
+  if(op === '/'){ b = randInt(1,10); res = randInt(-20,20); a = res*b; } 
+  else if(op==='*'){ a = randInt(-10,10); b = randInt(-10,10); res = a*b; }
+  else if(op==='+'){ a = randInt(-20,20); b = randInt(-20,20); res = a+b; }
+  else { a = randInt(-20,20); b = randInt(-20,20); res = a-b; }
+
+  const distractors = new Set([res,-res]);
   while(distractors.size<4){
     let delta = randInt(-6,6);
     let d = res+delta;
@@ -145,8 +128,7 @@ function genOne(){
   return {a,b,op,result:res,choices};
 }
 
-let questions=[];
-for(let i=0;i<TOTAL;i++)questions.push(genOne());
+let questions=[]; for(let i=0;i<TOTAL;i++)questions.push(genOne());
 let index=0,score=0,answered=false;
 
 const qIndex=document.getElementById('qIndex');
