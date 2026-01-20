@@ -72,7 +72,7 @@
 <script>
 const TOTAL = 20;
 const qTotalEl = document.getElementById('qTotal');
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw2jJtwWx6oIGk9Y-18FiAdLRoO0T2ZqtBlxdqJyfJVHLtJYjRfczhYO5lCq7JLZvs4/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwP-e48WHRCyEEVm9CPeeEg7uAYNZxXvNpS8231ukG3_BHc-xJEGt_qmFJ0yQrSi4TY/exec";
 qTotalEl.textContent = TOTAL;
 
 function randInt(min,max){ return Math.floor(Math.random()*(max-min+1))+min }
@@ -209,20 +209,13 @@ function sendResult(){
     return;
   }
 
-  fetch(SCRIPT_URL, {
-    method: "POST",
-    body: JSON.stringify({
-      name: name,
-      score: score,
-      total: TOTAL
-    }),
-    headers: {
-      "Content-Type": "application/json"
-    }
-  })
-  .then(r => r.json())
-  .then(d => console.log("Mentve:", d))
-  .catch(err => console.error("Hiba:", err));
+  const url = SCRIPT_URL + 
+    `?name=${encodeURIComponent(name)}&score=${score}&total=${TOTAL}`;
+
+  fetch(url)
+    .then(r => r.json())
+    .then(d => console.log("Mentve:", d))
+    .catch(err => console.error("Hiba:", err));
 }
 
 render();
