@@ -30,19 +30,51 @@
   </style>
 </head>
 <body>
+
+  <!-- Név bekérő modal -->
+  <div id="nameModal" style="
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+  ">
+    <div style="
+        background: white;
+        padding: 20px 30px;
+        border-radius: 12px;
+        text-align: center;
+        width: 320px;
+    ">
+      <h2>Üdv! Kérlek, írd be a neved</h2>
+      <input id="modalNameInput" type="text" placeholder="Neved" style="padding:6px;font-size:16px;width:100%; margin-top:10px">
+      <button id="modalNameBtn" style="
+        margin-top: 12px;
+        background: #0b74d1;
+        color: white;
+        border: none;
+        padding: 10px 14px;
+        border-radius: 10px;
+        font-weight: 700;
+        cursor: pointer;
+        width: 100%;
+      ">Kezdés</button>
+    </div>
+  </div>
+
   <div class="card">
     <h1>Egész számok – Összeadás, Kivonás, Szorzás, Osztás</h1>
     <div class="meta">20 kérdés. Minden kérdésnél számítsd ki az eredményt. Bármilyen egész szám előfordulhat.</div>
-	
-	<div style="margin-bottom:10px">
-  <label>
-    Név:
-    <input id="playerName" type="text" placeholder="Írd be a neved"
-           style="padding:6px;font-size:16px;width:220px">
-  </label>
-</div>
 
-
+    <div style="margin-bottom:10px">
+      <label>
+        Név:
+        <input id="playerName" type="text" placeholder="Írd be a neved"
+               style="padding:6px;font-size:16px;width:220px" readonly>
+      </label>
+    </div>
 
     <div class="progress" aria-hidden><div class="bar" id="bar"></div></div>
     <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
@@ -129,6 +161,22 @@ const final=document.getElementById('final');
 const finalResult=document.getElementById('finalResult');
 const review=document.getElementById('review');
 
+let playerName = "";
+
+// Modal elemek
+const nameModal = document.getElementById('nameModal');
+const modalInput = document.getElementById('modalNameInput');
+const modalBtn = document.getElementById('modalNameBtn');
+
+modalBtn.addEventListener('click', () => {
+  const val = modalInput.value.trim();
+  if(!val){ alert("Kérlek, add meg a neved!"); return; }
+  playerName = val;
+  document.getElementById('playerName').value = playerName;
+  nameModal.style.display = 'none';
+  render(); // csak a név megadása után indul a kvíz
+});
+
 function render(){
   const q=questions[index];
   qIndex.textContent=index+1;
@@ -190,9 +238,9 @@ function showFinal(){
   review.innerHTML='<h3>Áttekintés</h3>';
   const ol=document.createElement('ol');
   questions.forEach((q,i)=>{
-    const li=document.createElement('li');
     const chosen=q.picked!==undefined?formatNum(q.picked):'(nem választott)';
     const opSymbol = q.op==='/' ? ':' : q.op;
+    const li=document.createElement('li');
     li.innerHTML=`<strong>${i+1}.</strong> (${formatNum(q.a)}) ${opSymbol} (${formatNum(q.b)}) = <strong>${formatNum(q.result)}</strong> — választott: ${chosen}`;
     li.style.color=q.correct?'#065f46':'#7f1d1d';
     ol.appendChild(li);
@@ -203,14 +251,10 @@ function showFinal(){
 }
 
 function sendResult(){
-  const name = document.getElementById('playerName').value.trim();
-  if(!name){
-    alert("Kérlek, add meg a neved!");
-    return;
-  }
+  if(!playerName){ alert("Hiba: a név nincs megadva!"); return; }
 
   const url = SCRIPT_URL + 
-    `?name=${encodeURIComponent(name)}&score=${score}&total=${TOTAL}`;
+    `?name=${encodeURIComponent(playerName)}&score=${score}&total=${TOTAL}`;
 
   fetch(url)
     .then(r => r.json())
@@ -218,7 +262,7 @@ function sendResult(){
     .catch(err => console.error("Hiba:", err));
 }
 
-render();
+// Nem hívjuk render() automatikusan, csak a modalon keresztül indul
 </script>
 </body>
 </html>
