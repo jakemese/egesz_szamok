@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="hu">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Egész számok – Összeadás, Kivonás, Szorzás, Osztás (Quiz, 20 kérdés)</title>
+  <style>
+    :root{--accent:#0b74d1;--ok:#16a34a;--bad:#dc2626}
+    body{font-family:system-ui,Segoe UI,Roboto,Arial;background:#f4fbff;color:#042;display:flex;align-items:center;justify-content:center;padding:20px}
+    .card{width:820px;max-width:96vw;background:white;border-radius:12px;padding:20px;box-shadow:0 10px 30px rgba(2,6,23,0.08)}
+    h1{margin:0 0 8px;font-size:20px}
+    .meta{color:#345;font-size:14px;margin-bottom:14px}
+    .question{font-size:28px;font-weight:700;margin:18px 0}
+    .choices{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .choice{padding:14px;border-radius:10px;border:2px solid rgba(3,10,20,0.06);background:#fbfeff;font-size:20px;text-align:center;cursor:pointer;color:#000}
+    .choice:hover{transform:translateY(-4px);box-shadow:0 10px 20px rgba(11,116,209,0.06);transition:all .12s}
+    .choice.correct{background:linear-gradient(90deg,#dcfce7,#ecffef);border-color:var(--ok)}
+    .choice.wrong{background:linear-gradient(90deg,#fff1f2,#fff6f6);border-color:var(--bad)}
+    .controls{display:flex;justify-content:space-between;align-items:center;margin-top:16px}
+    button{background:var(--accent);color:white;border:none;padding:10px 14px;border-radius:10px;cursor:pointer;font-weight:700}
+    button[disabled]{opacity:.5;cursor:not-allowed}
+    .small{font-size:13px;color:#456}
+    .progress{height:10px;background:#eef5fb;border-radius:999px;overflow:hidden;margin-top:8px}
+    .bar{height:100%;background:var(--accent);width:0%}
+    .result{margin-top:18px;padding:12px;border-radius:10px}
+    .result.good{background:#ecfdf5;border:1px solid #bbf7d0;color:#064e3b}
+    .result.bad{background:#fff1f2;border:1px solid #fecaca;color:#7f1d1d}
+    .review{margin-top:12px;max-height:220px;overflow:auto;padding-right:8px}
+    @media(max-width:600px){.choices{grid-template-columns:1fr}.question{font-size:22px}}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Egész számok – Összeadás, Kivonás, Szorzás, Osztás</h1>
+    <div class="meta">20 kérdés. Minden kérdésnél számítsd ki az eredményt. Bármilyen egész szám előfordulhat.</div>
+
+    <div class="progress" aria-hidden><div class="bar" id="bar"></div></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
+      <div class="small">Kérdés: <strong id="qIndex">1</strong> / <strong id="qTotal">20</strong></div>
+      <div class="small">Pont: <strong id="score">0</strong></div>
+    </div>
+
+    <div id="quizArea">
+      <div class="question" id="questionText">...</div>
+      <div class="choices" id="choices"></div>
+    </div>
+
+    <div class="controls">
+      <div>
+        <button id="nextBtn" disabled>Következő</button>
+        <button id="restartBtn" style="background:#6b7280;margin-left:8px">Újrakezdés</button>
+      </div>
+      <div class="small" id="feedback"></div>
+    </div>
+
+    <div id="final" style="display:none">
+      <div class="result" id="finalResult"></div>
+      <div class="review" id="review"></div>
+    </div>
+  </div>
+
+<script>
+const TOTAL = 20;
+const qTotalEl = document.getElementById('qTotal');
+qTotalEl.textContent = TOTAL;
+
+function randInt(min,max){ return Math.floor(Math.random()*(max-min+1))+min }
+function formatNum(n){ return n>0? '+'+n:String(n) }
+
+function genOne(){
+  const ops = ['+','-','*','/'];
+  const op = ops[Math.floor(Math.random()*ops.length)];
+  let a,b,res;
+  if(op === '/'){ // osztás
+    b = randInt(1,10);
+    res = randInt(-20,20);
+    a = res*b;
+  } else if(op==='*'){ // szorzás
+    a = randInt(-10,10);
+    b = randInt(-10,10);
+    res = a*b;
+  } else if(op==='+'){ // összeadás
+    a = randInt(-20,20);
+    b = randInt(-20,20);
+    res = a+b;
+  } else { // kivonás
+    a = randInt(-20,20);
+    b = randInt(-20,20);
+    res = a-b;
+  }
+  const distractors = new Set();
+  distractors.add(res); // helyes válasz
+  distractors.add(-res); // helyes válasz ellentettje
+  while(distractors.size<4){
+    let delta = randInt(-6,6);
+    let d = res+delta;
+    if(d===res || d===-res) continue;
+    distractors.add(d);
+  }
+  const choices = Array.from(distractors);
+  for(let i=choices.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[choices[i],choices[j]]=[choices[j],choices[i]]}
+  return {a,b,op,result:res,choices};
+}
+
+let questions=[];
+for(let i=0;i<TOTAL;i++)questions.push(genOne());
+let index=0,score=0,answered=false;
+
+const qIndex=document.getElementById('qIndex');
+const scoreEl=document.getElementById('score');
+const questionText=document.getElementById('questionText');
+const choicesEl=document.getElementById('choices');
+const nextBtn=document.getElementById('nextBtn');
+const restartBtn=document.getElementById('restartBtn');
+const feedback=document.getElementById('feedback');
+const bar=document.getElementById('bar');
+const final=document.getElementById('final');
+const finalResult=document.getElementById('finalResult');
+const review=document.getElementById('review');
+
+function render(){
+  const q=questions[index];
+  qIndex.textContent=index+1;
+  scoreEl.textContent=score;
+  bar.style.width=Math.round((index/TOTAL)*100)+'%';
+  const opSymbol = q.op==='/' ? ':' : q.op;
+  questionText.textContent=`(${formatNum(q.a)}) ${opSymbol} (${formatNum(q.b)}) = ?`;
+  choicesEl.innerHTML='';
+  q.choices.forEach(c=>{
+    const btn=document.createElement('button');
+    btn.className='choice';
+    btn.textContent=formatNum(c);
+    btn.onclick=()=>select(c,btn);
+    choicesEl.appendChild(btn);
+  });
+  feedback.textContent='';
+  nextBtn.disabled=true;
+  answered=false;
+}
+
+function select(val,el){
+  if(answered) return;
+  answered=true;
+  const q=questions[index];
+  const buttons=document.querySelectorAll('.choice');
+  buttons.forEach(b=>{
+    const v=parseInt(b.textContent.replace('+',''),10);
+    if(v===q.result)b.classList.add('correct');
+    b.disabled=true;
+  });
+  if(val===q.result){el.classList.add('correct');score++;feedback.textContent='Helyes! +1 pont.'}
+  else{el.classList.add('wrong');feedback.textContent='Helytelen — a helyes eredmény: '+formatNum(q.result)}
+  q.picked=val;q.correct=(val===q.result);
+  scoreEl.textContent=score;
+  nextBtn.disabled=false;
+  bar.style.width=Math.round(((index+1)/TOTAL)*100)+'%';
+}
+
+nextBtn.addEventListener('click',()=>{
+  index++;
+  if(index>=TOTAL){showFinal();return;}
+  render();
+});
+
+restartBtn.addEventListener('click',()=>{
+  questions=[];for(let i=0;i<TOTAL;i++)questions.push(genOne());
+  index=0;score=0;nextBtn.textContent='Következő';final.style.display='none';
+  document.getElementById('quizArea').style.display='';
+  document.querySelector('.controls').style.display='';
+  render();
+});
+
+function showFinal(){
+  document.getElementById('quizArea').style.display='none';
+  document.querySelector('.controls').style.display='none';
+  final.style.display='block';
+  finalResult.className='result '+(score>=Math.ceil(TOTAL*0.7)?'good':'bad');
+  finalResult.textContent=`Végeredmény: ${score} / ${TOTAL} pont`;
+  review.innerHTML='<h3>Áttekintés</h3>';
+  const ol=document.createElement('ol');
+  questions.forEach((q,i)=>{
+    const li=document.createElement('li');
+    const chosen=q.picked!==undefined?formatNum(q.picked):'(nem választott)';
+    const opSymbol = q.op==='/' ? ':' : q.op;
+    li.innerHTML=`<strong>${i+1}.</strong> (${formatNum(q.a)}) ${opSymbol} (${formatNum(q.b)}) = <strong>${formatNum(q.result)}</strong> — választott: ${chosen}`;
+    li.style.color=q.correct?'#065f46':'#7f1d1d';
+    ol.appendChild(li);
+  });
+  review.appendChild(ol);
+  bar.style.width='100%';
+}
+
+render();
+</script>
+</body>
+</html>
