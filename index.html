@@ -174,7 +174,7 @@ function render(){
     btn.onclick=()=>select(c,btn);
     choicesEl.appendChild(btn);
   });
-  feedback.textContent='';
+
   nextBtn.disabled=true;
   answered=false;
 }
@@ -189,8 +189,8 @@ function select(val,el){
     if(v===q.result)b.classList.add('correct');
     b.disabled=true;
   });
-  if(val===q.result){el.classList.add('correct');score++;feedback.textContent='Helyes! +1 pont.'}
-  else{el.classList.add('wrong');feedback.textContent='Helytelen — a helyes eredmény: '+formatNum(q.result)}
+  if(val===q.result){el.classList.add('correct');score++;}
+  else{el.classList.add('wrong');}
   q.picked=val;q.correct=(val===q.result);
   scoreEl.textContent=score;
   nextBtn.disabled=false;
